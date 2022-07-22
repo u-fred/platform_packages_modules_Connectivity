@@ -17,8 +17,6 @@
 package com.android.server.net;
 
 import com.android.net.module.util.Struct;
-import com.android.net.module.util.Struct.Field;
-import com.android.net.module.util.Struct.Type;
 
 /**
  * Value for cookie tag map.
