@@ -20,6 +20,7 @@ import static android.system.OsConstants.*;
 
 import android.annotation.NonNull;
 import android.annotation.Nullable;
+import android.ext.settings.ConnChecksSetting;
 import android.net.InetAddresses;
 import android.net.LinkAddress;
 import android.net.LinkProperties;
@@ -33,6 +34,7 @@ import android.system.ErrnoException;
 import android.system.Os;
 import android.system.StructTimeval;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.Pair;
 
 import com.android.internal.util.IndentingPrintWriter;
@@ -593,6 +595,11 @@ public class NetworkDiagnostics {
 
         @Override
         public void run() {
+            if (ConnChecksSetting.get() == ConnChecksSetting.VAL_DISABLED) {
+                Log.d(TAG, "skipping DnsUdpCheck: connectivity checks are disabled");
+                return;
+            }
+
             if (ensureMeasurementNecessary()) return;
 
             try {
@@ -605,10 +612,9 @@ public class NetworkDiagnostics {
 
             // This needs to be fixed length so it can be dropped into the pre-canned packet.
             final String sixRandomDigits = String.valueOf(mRandom.nextInt(900000) + 100000);
-            appendDnsToMeasurementDescription(sixRandomDigits, mSocketAddress);
-
             // Build a trivial DNS packet.
             final byte[] dnsPacket = getDnsQueryPacket(sixRandomDigits);
+            appendDnsToMeasurementDescription(sixRandomDigits, mSocketAddress);
 
             int count = 0;
             mMeasurement.startTime = now();
@@ -642,9 +648,12 @@ public class NetworkDiagnostics {
             close();
         }
 
-        protected byte[] getDnsQueryPacket(String sixRandomDigits) {
+        private String qnameEnding;
+
+        protected byte[] getDnsQueryPacket(String sixRandomDigits) { // todo
             byte[] rnd = sixRandomDigits.getBytes(StandardCharsets.US_ASCII);
-            return new byte[] {
+
+            byte[] start = {
                 (byte) mRandom.nextInt(), (byte) mRandom.nextInt(),  // [0-1]   query ID
                 1, 0,  // [2-3]   flags; byte[2] = 1 for recursion desired (RD).
                 0, 1,  // [4-5]   QDCOUNT (number of queries)
@@ -653,20 +662,80 @@ public class NetworkDiagnostics {
                 0, 0,  // [10-11] ARCOUNT (number of additional records)
                 17, rnd[0], rnd[1], rnd[2], rnd[3], rnd[4], rnd[5],
                         '-', 'a', 'n', 'd', 'r', 'o', 'i', 'd', '-', 'd', 's',
-                6, 'm', 'e', 't', 'r', 'i', 'c',
-                7, 'g', 's', 't', 'a', 't', 'i', 'c',
-                3, 'c', 'o', 'm',
+            };
+
+            final String qnameEnding;
+            if (ConnChecksSetting.get() == ConnChecksSetting.VAL_STANDARD) {
+                qnameEnding = "metric.gstatic.com";
+            } else {
+                qnameEnding = "dnscheck.grapheneos.org";
+            }
+            this.qnameEnding = qnameEnding;
+            byte[] middle = getQnameFragment(qnameEnding);
+
+            byte[] end = {
                 0,  // null terminator of FQDN (root TLD)
                 0, (byte) mQueryType,  // QTYPE
                 0, 1  // QCLASS, set to 1 = IN (Internet)
             };
+
+            return concatByteArrays(start, middle, end);
+        }
+
+        private byte[] concatByteArrays(byte[]... arrs) {
+            int len = 0;
+            for (byte[] arr : arrs) {
+                if (Integer.MAX_VALUE - len < arr.length) {
+                    // overflow
+                    throw new IllegalArgumentException();
+                }
+                len += arr.length;
+            }
+            byte[] res = new byte[len];
+            int off = 0;
+            for (byte[] arr : arrs) {
+                int l = arr.length;
+                System.arraycopy(arr, 0, res, off, l);
+                off += l;
+            }
+            return res;
+        }
+
+        protected byte[] getQnameFragment(String hostnameFragment) {
+            String[] strArr = hostnameFragment.split("\\.");
+            int len = strArr.length;
+            byte[][] arr = new byte[len][];
+            for (int i = 0; i < len; ++i) {
+                arr[i] = getQnameLabel(strArr[i]);
+            }
+            return concatByteArrays(arr);
+        }
+
+        private byte[] getQnameLabel(String s) {
+            final int l = s.length();
+            if (l > 0b11_1111 /* 63 */) {
+                // should be a 6 bit number
+                throw new IllegalArgumentException(s);
+            }
+
+            byte[] res = new byte[1 + l];
+            res[0] = (byte) l;
+
+            for (int i = 0; i < l; ++i) {
+                int ch = s.charAt(i);
+                if (ch > 0x7f) {
+                    throw new IllegalArgumentException(s);
+                }
+                res[1 + i] = (byte) ch;
+            }
+            return res;
         }
 
         protected void appendDnsToMeasurementDescription(
                 String sixRandomDigits, SocketAddress sockAddr) {
             mMeasurement.description += " src{" + socketAddressToString(sockAddr) + "}"
                     + " qtype{" + mQueryType + "}"
-                    + " qname{" + sixRandomDigits + "-android-ds.metric.gstatic.com}";
+                    + " qname{" + sixRandomDigits + "-android-ds." + qnameEnding + "}";
         }
     }
 
@@ -742,6 +811,11 @@ public class NetworkDiagnostics {
 
         @Override
         public void run() {
+            if (ConnChecksSetting.get() == ConnChecksSetting.VAL_DISABLED) {
+                Log.d(TAG, "skipping DnsTlsCheck: connectivity checks are disabled");
+                return;
+            }
+
             if (ensureMeasurementNecessary()) return;
 
             // No need to restore the tag, since this thread is only used for this measurement.
