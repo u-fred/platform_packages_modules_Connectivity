@@ -38,6 +38,7 @@ import android.net.ConnectivityManager.NetworkCallback;
 import android.net.ConnectivityThread;
 import android.net.Network;
 import android.net.NetworkRequest;
+import android.net.nsd.IOffloadEngine;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -671,6 +672,8 @@ public final class NsdManager {
                 @Override public void stopResolution(int listenerKey) {}
                 @Override public void registerServiceInfoCallback(int listenerKey, NsdServiceInfo serviceInfo) {}
                 @Override public void unregisterServiceInfoCallback(int listenerKey) {}
+                @Override public void registerOffloadEngine(String ifaceName, IOffloadEngine cb, long offloadCapabilities, long offloadType) {}
+                @Override public void unregisterOffloadEngine(IOffloadEngine cb) {}
                 @Override public android.os.IBinder asBinder() { return null; }
             };
         } else {
