@@ -769,9 +769,8 @@ DEFINE_NETD_V_BPF_PROG_KVER("getsockopt/prog", AID_ROOT, AID_ROOT, getsockopt_pr
 
 // Upstream uses 0 for attach_flags, so can only attach one program per attach type per cgroup.
 // See include/uapi/linux/bpf.h. If this program becomes too difficult to understand once upstream
-// are actually doing something with it, we can look into using BPF_F_ALLOW_MULTI. The reason to
-// not switch to multi now is because BPF is poorly documented so would need to read the code to
-// ensure we're doing things as they should be done, which is more likely to result in a bug.
+// are actually doing something with it, we can look into using BPF_F_ALLOW_MULTI or just using
+// a separate function for each program.
 //
 // This program prevents kernel-generated multicast traffic (IGMP, MLD) from being triggered by a
 // UID that is under a lockdown VPN. A known leak that still exists is when a UID joins a multicast
@@ -795,40 +794,29 @@ DEFINE_NETD_BPF_PROG_KVER("setsockopt/prog", AID_ROOT, AID_ROOT, setsockopt_prog
         return SETSOCKOPT_ALLOWED;
     }
 
-    // Not all of the socket options for which we return EPERM actually result in kernel-generated
-    // traffic. We're erroring on them to emulate a device without multicast support. Not certain if
-    // doing it this way will introduce more or less compat issues.
-
     if (ctx->level == IPPROTO_IP
             && (ctx->optname == IP_ADD_MEMBERSHIP
             || ctx->optname == IP_ADD_SOURCE_MEMBERSHIP
-            || ctx->optname == IP_BLOCK_SOURCE
             || ctx->optname == IP_DROP_MEMBERSHIP
             || ctx->optname == IP_DROP_SOURCE_MEMBERSHIP
-            || ctx->optname == IP_MSFILTER
-            || ctx->optname == IP_MULTICAST_ALL
-            || ctx->optname == IP_MULTICAST_IF
-            || ctx->optname == IP_MULTICAST_LOOP
-            || ctx->optname == IP_MULTICAST_TTL
-            || ctx->optname == IP_UNBLOCK_SOURCE)) {
+            || ctx->optname == IP_BLOCK_SOURCE
+            || ctx->optname == IP_UNBLOCK_SOURCE
+            || ctx->optname == IP_MSFILTER)) {
         return SETSOCKOPT_EPERM;
     }
 
     if (ctx->level == IPPROTO_IPV6
-            && (ctx->optname == IPV6_MULTICAST_IF
-            || ctx->optname == IPV6_MULTICAST_HOPS
-            || ctx->optname == IPV6_MULTICAST_LOOP
-            || ctx->optname == IPV6_ADD_MEMBERSHIP /** IPV6_JOIN_GROUP **/
+            && (ctx->optname == IPV6_ADD_MEMBERSHIP /** IPV6_JOIN_GROUP **/
             || ctx->optname == IPV6_DROP_MEMBERSHIP /** IPV6_LEAVE_GROUP **/)) {
         return SETSOCKOPT_EPERM;
     }
 
     if ((ctx->level == IPPROTO_IP || ctx->level == IPPROTO_IPV6)
             && (ctx->optname == MCAST_JOIN_GROUP
+            || ctx->optname == MCAST_LEAVE_GROUP
             || ctx->optname == MCAST_BLOCK_SOURCE
             || ctx->optname == MCAST_UNBLOCK_SOURCE
             || ctx->optname == MCAST_JOIN_SOURCE_GROUP
-            || ctx->optname == MCAST_LEAVE_GROUP
             || ctx->optname == MCAST_LEAVE_SOURCE_GROUP)) {
         return SETSOCKOPT_EPERM;
     }
