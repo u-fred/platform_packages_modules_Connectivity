@@ -398,18 +398,41 @@ static __always_inline inline bool ingress_should_discard(struct __sk_buff* skb,
     return true;  // disallowed interface
 }
 
+static __always_inline inline bool is_multicast_with_lockdown_vpn(struct __sk_buff* skb,
+                                                                  uint32_t uidRules,
+                                                                  const struct kver_uint kver) {
+    if (!(uidRules & LOCKDOWN_VPN_MATCH)) {
+        return false;
+    }
+    uint8_t addr_first_octet;
+    if (skb->protocol == htons(ETH_P_IP)) {
+        __u32 addr4;
+        (void) bpf_skb_load_bytes_net(skb, IP4_OFFSET(daddr), &addr4, sizeof(addr4), kver);
+        addr_first_octet = (ntohl(addr4) >> 24) & 0xFF;
+        if (addr_first_octet >= 224 && addr_first_octet <= 239) return true;
+    } else if (skb->protocol == htons(ETH_P_IPV6)) {
+        __u32 addr6[4];
+        (void) bpf_skb_load_bytes_net(skb, IP6_OFFSET(daddr), &addr6, sizeof(addr6), kver);
+        addr_first_octet = (ntohl(addr6[0]) >> 24) & 0xFF;
+        if (addr_first_octet == 0xFF) return true;
+    }
+    return false;
+}
+
 static __always_inline inline int bpf_owner_match(struct __sk_buff* skb, uint32_t uid,
                                                   const struct egress_bool egress,
                                                   const struct kver_uint kver) {
-    if (is_system_uid(uid)) return PASS;
-
-    if (skip_owner_match(skb, egress, kver)) return PASS;
-
     BpfConfig enabledRules = getConfig(UID_RULES_CONFIGURATION_KEY);
 
     UidOwnerValue* uidEntry = bpf_uid_owner_map_lookup_elem(&uid);
     uint32_t uidRules = uidEntry ? uidEntry->rule : 0;
     uint32_t allowed_iif = uidEntry ? uidEntry->iif : 0;
+
+    if (is_multicast_with_lockdown_vpn(skb, uidRules, kver)) return DROP;
+
+    if (is_system_uid(uid)) return PASS;
+
+    if (skip_owner_match(skb, egress, kver)) return PASS;
 
     if (isBlockedByUidRules(enabledRules, uidRules)) return DROP;
 
