@@ -406,14 +406,14 @@ static __always_inline inline bool is_multicast_with_lockdown_vpn(struct __sk_bu
     }
     uint8_t addr_first_octet;
     if (skb->protocol == htons(ETH_P_IP)) {
-        __u32 addr4;
-        (void) bpf_skb_load_bytes_net(skb, IP4_OFFSET(daddr), &addr4, sizeof(addr4), kver);
-        addr_first_octet = (ntohl(addr4) >> 24) & 0xFF;
+        __u32 daddr4;
+        (void) bpf_skb_load_bytes_net(skb, IP4_OFFSET(daddr), &daddr4, sizeof(daddr4), kver);
+        addr_first_octet = (ntohl(daddr4) >> 24) & 0xFF;
         if (addr_first_octet >= 224 && addr_first_octet <= 239) return true;
     } else if (skb->protocol == htons(ETH_P_IPV6)) {
-        __u32 addr6[4];
-        (void) bpf_skb_load_bytes_net(skb, IP6_OFFSET(daddr), &addr6, sizeof(addr6), kver);
-        addr_first_octet = (ntohl(addr6[0]) >> 24) & 0xFF;
+        __u32 daddr6[4];
+        (void) bpf_skb_load_bytes_net(skb, IP6_OFFSET(daddr), &daddr6, sizeof(daddr6), kver);
+        addr_first_octet = (ntohl(daddr6[0]) >> 24) & 0xFF;
         if (addr_first_octet == 0xFF) return true;
     }
     return false;
