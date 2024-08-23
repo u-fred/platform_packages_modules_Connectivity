@@ -715,7 +715,8 @@ DEFINE_NETD_BPF_PROG_KVER("setsockopt/lockdown_vpn_multicast", AID_ROOT, AID_ROO
     // traffic. We're erroring on them to emulate a device without multicast support. Not certain if
     // doing it this way will introduce more or less compat issues.
 
-    if (ctx->level == IPPROTO_IP && (ctx->optname == IP_ADD_MEMBERSHIP
+    if (ctx->level == IPPROTO_IP
+            && (ctx->optname == IP_ADD_MEMBERSHIP
             || ctx->optname == IP_ADD_SOURCE_MEMBERSHIP
             || ctx->optname == IP_BLOCK_SOURCE
             || ctx->optname == IP_DROP_MEMBERSHIP
