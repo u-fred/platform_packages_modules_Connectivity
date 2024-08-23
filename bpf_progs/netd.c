@@ -398,12 +398,8 @@ static __always_inline inline bool ingress_should_discard(struct __sk_buff* skb,
     return true;  // disallowed interface
 }
 
-static __always_inline inline bool is_multicast_with_lockdown_vpn(struct __sk_buff* skb,
-                                                                  uint32_t uidRules,
-                                                                  const struct kver_uint kver) {
-    if (!(uidRules & LOCKDOWN_VPN_MATCH)) {
-        return false;
-    }
+static __always_inline inline bool is_multicast(struct __sk_buff* skb,
+                                                const struct kver_uint kver) {
     uint8_t addr_first_octet;
     if (skb->protocol == htons(ETH_P_IP)) {
         __u32 daddr4;
@@ -428,7 +424,9 @@ static __always_inline inline int bpf_owner_match(struct __sk_buff* skb, uint32_
     uint32_t uidRules = uidEntry ? uidEntry->rule : 0;
     uint32_t allowed_iif = uidEntry ? uidEntry->iif : 0;
 
-    if (is_multicast_with_lockdown_vpn(skb, uidRules, kver)) return DROP;
+    if ((uidRules & LOCKDOWN_VPN_MATCH) && is_multicast(skb, kver)) {
+        return DROP;
+    }
 
     if (is_system_uid(uid)) return PASS;
 
