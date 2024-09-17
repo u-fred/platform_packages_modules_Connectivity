@@ -480,6 +480,8 @@ static __always_inline inline int bpf_traffic_account(struct __sk_buff* skb,
     // packets to an unconnected udp socket.
     // But it can also happen for egress from a timewait socket.
     // Let's treat such cases as 'root' which is_system_uid()
+    // TODO: Verify that this can never occur for multicast traffic. Have done manual testing, but
+    //  need to read the kernel networking code to see if it is possible.
     if (sock_uid == 65534) sock_uid = 0;
 
     uint64_t cookie = bpf_get_socket_cookie(skb);  // 0 iff !skb->sk
