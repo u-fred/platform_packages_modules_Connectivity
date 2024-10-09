@@ -156,8 +156,7 @@ ASSERT_STRING_EQUAL(XT_BPF_ALLOWLIST_PROG_PATH, BPF_NETD_PATH "prog_netd_skfilte
 ASSERT_STRING_EQUAL(XT_BPF_DENYLIST_PROG_PATH,  BPF_NETD_PATH "prog_netd_skfilter_denylist_xtbpf");
 
 #define CGROUP_SOCKET_PROG_PATH BPF_NETD_PATH "prog_netd_cgroupsock_inet_create"
-#define CGROUP_SETSOCKOPT_LOCKDOWN_VPN_MULTICAST_PROG_PATH BPF_NETD_PATH \
-    "prog_netd_setsockopt_lockdown_vpn_multicast"
+#define CGROUP_SETSOCKOPT_PROG_PATH BPF_NETD_PATH "prog_netd_setsockopt_prog"
 
 #define TC_BPF_INGRESS_ACCOUNT_PROG_NAME "prog_netd_schedact_ingress_account"
 #define TC_BPF_INGRESS_ACCOUNT_PROG_PATH BPF_NETD_PATH TC_BPF_INGRESS_ACCOUNT_PROG_NAME
@@ -194,7 +193,8 @@ enum UidOwnerMatchType : uint32_t {
     OEM_DENY_1_MATCH = (1 << 9),
     OEM_DENY_2_MATCH = (1 << 10),
     OEM_DENY_3_MATCH = (1 << 11),
-    BACKGROUND_MATCH = (1 << 12)
+    BACKGROUND_MATCH = (1 << 12),
+    LOCKDOWN_VPN_REGULAR_APP_MATCH = (1 << 30)
 };
 // LINT.ThenChange(../framework/src/android/net/BpfNetMapsConstants.java)
 
