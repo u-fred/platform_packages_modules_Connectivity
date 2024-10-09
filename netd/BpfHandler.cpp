@@ -160,8 +160,7 @@ static Status initPrograms(const char* cg2_path) {
     // in 5.8, which our program requires.
     if (bpf::isAtLeastKernelVersion(5, 8, 0)) {
         RETURN_IF_NOT_OK(
-                attachProgramToCgroup(CGROUP_SETSOCKOPT_LOCKDOWN_VPN_MULTICAST_PROG_PATH, cg_fd,
-                                      BPF_CGROUP_SETSOCKOPT));
+                attachProgramToCgroup(CGROUP_SETSOCKOPT_PROG_PATH, cg_fd, BPF_CGROUP_SETSOCKOPT));
         if (bpf::queryProgram(cg_fd, BPF_CGROUP_SETSOCKOPT) <= 0) abort();
     }
 
