@@ -228,6 +228,7 @@ import android.net.resolv.aidl.DnsHealthEventParcel;
 import android.net.resolv.aidl.IDnsResolverUnsolicitedEventListener;
 import android.net.resolv.aidl.Nat64PrefixEventParcel;
 import android.net.resolv.aidl.PrivateDnsValidationEventParcel;
+import android.net.vdc.aidl.IVdc;
 import android.net.shared.PrivateDnsConfig;
 import android.net.wifi.WifiInfo;
 import android.os.BatteryStatsManager;
@@ -1786,6 +1787,15 @@ public class ConnectivityService extends IConnectivityManager.Stub
         mWakeUpMask = mask;
 
         mNetd = netd;
+
+        /*
+        try {
+            IVdc mVdc = IVdc.Stub.asInterface(mNetd.asBinder().getExtension());
+        } catch (RemoteException e) {
+            ;
+        }
+         */
+
         mBpfNetMaps = mDeps.getBpfNetMaps(mContext, netd);
         mHandlerThread = mDeps.makeHandlerThread("ConnectivityServiceThread");
         mPermissionMonitor =
