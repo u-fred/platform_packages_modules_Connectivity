@@ -301,6 +301,7 @@ package android.net {
     method @NonNull public android.net.NetworkAgentConfig.Builder setPartialConnectivityAcceptable(boolean);
     method @NonNull public android.net.NetworkAgentConfig.Builder setProvisioningNotificationEnabled(boolean);
     method @NonNull public android.net.NetworkAgentConfig.Builder setUnvalidatedConnectivityAcceptable(boolean);
+    method @NonNull public android.net.NetworkAgentConfig.Builder setVpnDnsCompatModeEnabled(boolean);
   }
 
   public final class NetworkCapabilities implements android.os.Parcelable {

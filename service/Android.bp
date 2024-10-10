@@ -195,6 +195,7 @@ java_library {
         "net-utils-device-common-netlink",
         "net-utils-services-common",
         "netd-client",
+        "vdc_aidl_interface-V1-java",
         "networkstack-client",
         "PlatformProperties",
         "service-connectivity-protos",

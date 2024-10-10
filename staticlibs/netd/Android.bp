@@ -256,3 +256,22 @@ aidl_interface {
     frozen: true,
 
 }
+
+aidl_interface {
+    name: "vdc_aidl_interface",
+    local_include_dir: "binder",
+    srcs: [
+        "binder/android/net/vdc/aidl/**/*.aidl",
+    ],
+    backend: {
+        java: {
+            sdk_version: "module_current",
+            apex_available: [
+                "//apex_available:platform", // used from services.net
+                "com.android.tethering",
+                "com.android.wifi",
+            ],
+            min_sdk_version: "30",
+        },
+    },
+}

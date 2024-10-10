@@ -228,6 +228,7 @@ import android.net.resolv.aidl.DnsHealthEventParcel;
 import android.net.resolv.aidl.IDnsResolverUnsolicitedEventListener;
 import android.net.resolv.aidl.Nat64PrefixEventParcel;
 import android.net.resolv.aidl.PrivateDnsValidationEventParcel;
+import android.net.vdc.aidl.IVdc;
 import android.net.shared.PrivateDnsConfig;
 import android.net.wifi.WifiInfo;
 import android.os.BatteryStatsManager;
@@ -499,6 +500,8 @@ public class ConnectivityService extends IConnectivityManager.Stub
     protected IDnsResolver mDnsResolver;
     @VisibleForTesting
     protected INetd mNetd;
+    // TODO: Rename.
+    protected IVdc mVdc;
     private DscpPolicyTracker mDscpPolicyTracker = null;
     private final NetworkStatsManager mStatsManager;
     private final NetworkPolicyManager mPolicyManager;
@@ -1786,6 +1789,12 @@ public class ConnectivityService extends IConnectivityManager.Stub
         mWakeUpMask = mask;
 
         mNetd = netd;
+        try {
+            mVdc = IVdc.Stub.asInterface(mNetd.asBinder().getExtension());
+        } catch (RemoteException e) {
+            // TODO: Unsure.
+        }
+
         mBpfNetMaps = mDeps.getBpfNetMaps(mContext, netd);
         mHandlerThread = mDeps.makeHandlerThread("ConnectivityServiceThread");
         mPermissionMonitor =
@@ -5321,6 +5330,9 @@ public class ConnectivityService extends IConnectivityManager.Stub
                         false /* excludeLocalRoutes */);
             }
             mNetd.networkCreate(config);
+            // TODO: Check if VPN here.
+            mVdc.setVpnDnsCompatModeEnabled(nai.network.getNetId(), nai.networkAgentConfig.dnsCompatModeEnabled);
+            mNetd.asBinder().getExtension();
             mDnsResolver.createNetworkCache(nai.network.getNetId());
             mDnsManager.updateCapabilitiesForNetwork(nai.network.getNetId(),
                     nai.networkCapabilities);

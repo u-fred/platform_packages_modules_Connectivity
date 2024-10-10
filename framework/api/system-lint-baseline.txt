@@ -27,3 +27,7 @@ RequiresPermission: android.net.http.BidirectionalStream.Builder#setTrafficStats
     Method 'setTrafficStatsUid' documentation mentions permissions without declaring @RequiresPermission
 RequiresPermission: android.net.http.UrlRequest.Builder#setTrafficStatsUid(int):
     Method 'setTrafficStatsUid' documentation mentions permissions without declaring @RequiresPermission
+
+
+UnflaggedApi: android.net.NetworkAgentConfig.Builder#setVpnDnsCompatModeEnabled(boolean):
+    New API must be flagged with @FlaggedApi: method android.net.NetworkAgentConfig.Builder.setVpnDnsCompatModeEnabled(boolean)

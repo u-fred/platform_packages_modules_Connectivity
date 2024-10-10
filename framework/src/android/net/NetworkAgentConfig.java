@@ -244,6 +244,12 @@ public final class NetworkAgentConfig implements Parcelable {
     public boolean excludeLocalRouteVpn = false;
 
     /**
+     *
+     * @hide
+     */
+    public boolean dnsCompatModeEnabled = false;
+
+    /**
      * @return whether local traffic is excluded from the VPN network.
      * @hide
      */
@@ -293,6 +299,7 @@ public final class NetworkAgentConfig implements Parcelable {
             mLegacyExtraInfo = nac.mLegacyExtraInfo;
             excludeLocalRouteVpn = nac.excludeLocalRouteVpn;
             mVpnRequiresValidation = nac.mVpnRequiresValidation;
+            dnsCompatModeEnabled = nac.dnsCompatModeEnabled;
         }
     }
 
@@ -480,6 +487,18 @@ public final class NetworkAgentConfig implements Parcelable {
                 throw new UnsupportedOperationException("Method is not supported");
             }
             mConfig.excludeLocalRouteVpn = excludeLocalRoutes;
+            return this;
+        }
+
+        /**
+         * Sets whether VPN DNS compat mode is enabled.
+         *
+         * @return this builder, to facilitate chaining.
+         */
+
+        @NonNull
+        public Builder setVpnDnsCompatModeEnabled(boolean enabled) {
+            mConfig.dnsCompatModeEnabled = enabled;
             return this;
         }
 
