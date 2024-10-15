@@ -33,6 +33,7 @@ import android.annotation.SystemApi;
 import android.annotation.SystemService;
 import android.app.compat.CompatChanges;
 import android.content.Context;
+import android.ext.ConnectivityUtil;
 import android.net.ConnectivityManager;
 import android.net.ConnectivityManager.NetworkCallback;
 import android.net.ConnectivityThread;
@@ -725,7 +726,9 @@ public final class NsdManager {
         // Instead of launching separate threads to handle tasks from the various instances.
         mHandler = new ServiceHandler(ConnectivityThread.getInstanceLooper());
 
-        if (android.content.pm.SpecialRuntimePermAppUtils.isInternetCompatEnabled()) {
+        int uid = android.os.Process.myUid();
+        if (android.content.pm.SpecialRuntimePermAppUtils.isInternetCompatEnabled() ||
+                ConnectivityUtil.isRegularAppWithLockdownVpnEnabled(mContext, uid)) {
             // INsdManager#connect() enforces INTERNET permission
             mService = new INsdServiceConnector() {
                 final NsdCallbackImpl callback = new NsdCallbackImpl(mHandler);
